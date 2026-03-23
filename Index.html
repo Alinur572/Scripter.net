@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALINUR PASTE</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e24;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #2b2b36;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        input, textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #1e1e24;
+            border: 1px solid #4CAF50;
+            color: #ffffff;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        textarea {
+            height: 200px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .btn-raw {
+            background-color: #2196F3;
+        }
+        .btn-raw:hover {
+            background-color: #0b7dda;
+        }
+        .btn-delete {
+            background-color: #f44336;
+        }
+        .btn-delete:hover {
+            background-color: #da190b;
+        }
+        hr {
+            border: 1px solid #444;
+            margin: 30px 0;
+        }
+        .paste-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .paste-item {
+            background-color: #1e1e24;
+            padding: 15px;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+        }
+        .paste-item h3 {
+            margin: 0 0 10px 0;
+        }
+        .paste-actions {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ALINUR PASTE</h1>
+    
+    <div>
+        <label for="pasteTitle">Жазбаның аты:</label>
+        <input type="text" id="pasteTitle" placeholder="Мысалы: Менің бірінші кодым...">
+        
+        <label for="pasteContent">Мәтін немесе код:</label>
+        <textarea id="pasteContent" placeholder="Осы жерге мәтінді енгізіңіз..."></textarea>
+        
+        <button onclick="savePaste()">Сақтау (Save)</button>
+    </div>
+
+    <hr>
+
+    <h2>Сақталған жазбалар</h2>
+    <div class="paste-list" id="pasteList">
+        </div>
+</div>
+
+<script>
+    // Бет жүктелгенде сақталған жазбаларды көрсету
+    document.addEventListener('DOMContentLoaded', loadPastes);
+
+    function savePaste() {
+        const titleInput = document.getElementById('pasteTitle');
+        const contentInput = document.getElementById('pasteContent');
+        
+        const title = titleInput.value.trim() || 'Атаусыз жазба';
+        const content = contentInput.value;
+
+        if (!content.trim()) {
+            alert('Мәтін жолағы бос болмауы керек!');
+            return;
+        }
+
+        const pastes = JSON.parse(localStorage.getItem('alinur_pastes') || '[]');
+        
+        const newPaste = {
+            id: Date.now().toString(),
+            title: title,
+            content: content,
+            date: new Date().toLocaleString()
+        };
+
+        pastes.unshift(newPaste); // Жаңасын ең басына қосу
+        localStorage.setItem('alinur_pastes', JSON.stringify(pastes));
+
+        titleInput.value = '';
+        contentInput.value = '';
+        
+        loadPastes();
+    }
+
+    function loadPastes() {
+        const pastes = JSON.parse(localStorage.getItem('alinur_pastes') || '[]');
+        const pasteList = document.getElementById('pasteList');
+        pasteList.innerHTML = '';
+
+        pastes.forEach(paste => {
+            const pasteItem = document.createElement('div');
+            pasteItem.className = 'paste-item';
+            
+            pasteItem.innerHTML = `
+                <h3>${paste.title} <span style="font-size:12px; color:#aaa; font-weight:normal;">(${paste.date})</span></h3>
+                <div class="paste-actions">
+                    <button class="btn-raw" onclick="viewRaw('${paste.id}')">RAW көру</button>
+                    <button class="btn-delete" onclick="deletePaste('${paste.id}')">Өшіру</button>
+                </div>
+            `;
+            
+            pasteList.appendChild(pasteItem);
+        });
+    }
+
+    function viewRaw(id) {
+        const pastes = JSON.parse(localStorage.getItem('alinur_pastes') || '[]');
+        const paste = pastes.find(p => p.id === id);
+        
+        if (paste) {
+            // Мәтінді жаңа терезеде таза (Raw) форматта ашу үшін Blob қолданамыз
+            const blob = new Blob([paste.content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        }
+    }
+
+    function deletePaste(id) {
+        if (confirm('Бұл жазбаны өшіруге сенімдісіз бе?')) {
+            let pastes = JSON.parse(localStorage.getItem('alinur_pastes') || '[]');
+            pastes = pastes.filter(p => p.id !== id);
+            localStorage.setItem('alinur_pastes', JSON.stringify(pastes));
+            loadPastes();
+        }
+    }
+</script>
+
+</body>
+</html>
+                
